@@ -1,50 +1,50 @@
 require('dotenv').config();
-const tmi = require('tmi.js');
-const didi = require('discord.js');
-const twitch = require('./assets/js/Twitch');
+
+const { Client, Intents } = require('discord.js');
 const discord = require('./assets/js/Discord');
-
-// Connect twitch bot
-const twitchClient = new tmi.Client({
-    options: { debug: true, messagesLogLevel: "info" },
-    connection: {
-        reconnect: true,
-        secure: true
-    },
-    identity: {
-        username: `${process.env.TWITCH_USERNAME}`,
-        password: `oauth:${process.env.TWITCH_OAUTH}`
-    },
-    channels: [`${process.env.TWITCH_CHANNEL}`]
-});
-
-twitchClient.connect().catch(console.error);
-
-twitchClient.on('connected', () => {
-    twitch.setClient(twitchClient);
-    setTimeout(() => {
-        twitch.getVips(response => {
-            console.log(response);
-        });
-    }, 2000)
-})
-
-twitchClient.on('message', (channel, tags, message, self) => {
-    //if (self) return;
-    twitch.onMessage(message);
-});
+const { REST } = require('@discordjs/rest');
+const { Routes } = require('discord-api-types/v9');
 
 // Connect Discord bot
-/*
-const discordClient = new didi.Client();
+const myIntents = new Intents();
 
-discordClient.on('ready', function () {
-    discord.setClient(discordClient, twitch);
+myIntents.add(Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILDS);
+
+const client = new Client({ intents: myIntents });
+
+client.on('ready', function () {
+    console.log('ready');
 });
 
-discordClient.login(`${process.env.DISCORD_TOKEN}`);
+client.login(`${process.env.DISCORD_TOKEN}`);
 
-discordClient.on('message', message => {
+client.on('message', message => {
     discord.onMessage(message);
 })
-*/
+
+// Register commands
+
+const rest = new REST({ version: '9' }).setToken(`${process.env.DISCORD_TOKEN}`);
+
+client.once('ready', () => {
+    (async () => {
+        try {
+          console.log('Started refreshing application (/) commands.');
+      
+          await rest.put(
+            Routes.applicationGuildCommands(client.user.id, '703515334832816181'),
+            { body: discord.commands },
+          );
+      
+          console.log('Successfully reloaded application (/) commands.');
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+      discord.setClient(client);
+});
+
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+    discord.onInteraction(interaction);
+});
