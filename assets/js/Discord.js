@@ -1,5 +1,6 @@
 require('dotenv').config();
 const twitch = require('./Twitch');
+const db = require('./Db');
 
 let client;
 
@@ -15,7 +16,9 @@ let setTwitchName = interaction => {
     let guild = interaction.guildId;
     let user = interaction.user.id;
     let twitchName = interaction.options.getString('pseudo');
-    console.log(guild, user, twitchName);
+
+    let response = db.saveTwitchName(guild, user, twitchName);
+    interaction.reply(response);
 };
 
 exports.commands = [

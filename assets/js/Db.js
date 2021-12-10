@@ -1,6 +1,6 @@
 const utils = require('./Utils');
 const fs = require('fs');
-const dbPath = './../db/db.json';
+const dbPath = __dirname + '/../db/db.json';
 
 let db = require('./../db/db.json');
 
@@ -11,7 +11,14 @@ const guildTemplate = {
 
 exports.save = () => {
     let strDb = JSON.stringify(db, null, 2);
-    fs.writeFileSync(dbPath, strDb);
+    console.log(strDb);
+    fs.writeFile(dbPath, strDb, err => {
+        if(err){
+            console.error(err);
+            return false;
+        }
+        return true;
+    });
 };
 
 exports.decryptDb = () => {
@@ -27,16 +34,20 @@ exports.loadGuild = (id) => {
     }
 
     db[id] = Object.assign({}, guildTemplate);
-    exports.save();
 
     return db[id];
 };
 
-exports.discordToTwitch = (guildId, discordId, twitchName) => {
+exports.saveTwitchName = (guildId, discordId, twitchName) => {
     let guild = exports.loadGuild(guildId);
     guild.members.push({
         discordId : twitchName
     });
 
-    exports.save();
+    if (exports.save()){
+        return "Votre pseudo Twitch a bien été enregistré";
+    }else {
+        return "Une erreur s'est produite";
+    }
+    
 };
