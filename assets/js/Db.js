@@ -1,53 +1,68 @@
 const utils = require('./Utils');
 const fs = require('fs');
-const dbPath = __dirname + '/../db/db.json';
+const sqlite3 = require('sqlite3').verbose();
+let db = new sqlite3.Database(__dirname + '/../db/diditwitchdb.db');
 
-let db = require('./../db/db.json');
+const TABLE_NAME = "GUILDS";
+const FIELD_ID = "ID";
+const FIELD_GUILD = "GUILD_ID";
+const FIELD_USER = "USER_ID";
+const FIELD_TWITCH_NAME = "TWITCH_NAME";
+const FIELD_DATE_UPDATE = "DATE_UPD";
 
-const guildTemplate = {
-    members : [],
-    vips : []
-};
-
-exports.save = () => {
-    let strDb = JSON.stringify(db, null, 2);
-    console.log(strDb);
-    fs.writeFile(dbPath, strDb, err => {
-        if(err){
-            console.error(err);
-            return false;
-        }
-        return true;
-    });
-};
-
-exports.decryptDb = () => {
-    for(let guild of db){
-        // TODO
-    }
+function createIfNotExists()
+{
+    let def = `
+        (
+            ${FIELD_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+            ${FIELD_GUILD} TEXT NOT NULL,
+            ${FIELD_USER} TEXT NOT NULL,
+            ${FIELD_TWITCH_NAME} TEXT NOT NULL,
+            ${FIELD_DATE_UPDATE} TEXT
+        )
+    `;
+    let sql = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} ${def};`;
+    
+    db.run(sql);
 }
 
-exports.loadGuild = (id) => {
-
-    if (utils.defined(db[id])){
-        return db[id];
-    }
-
-    db[id] = Object.assign({}, guildTemplate);
-
-    return db[id];
+exports.guildTemplate = {
+    id : -1,
+    guild : "",
+    user_id : "",
+    twitch : "",
+    date_update : ""
 };
 
-exports.saveTwitchName = (guildId, discordId, twitchName) => {
-    let guild = exports.loadGuild(guildId);
-    guild.members.push({
-        discordId : twitchName
-    });
-
-    if (exports.save()){
-        return "Votre pseudo Twitch a bien été enregistré";
-    }else {
-        return "Une erreur s'est produite";
+function rowToGuild(row) 
+{
+    let guild = Object.assign({}, exports.guildTemplate);
+    if (row){
+        guild.id = row[FIELD_ID];
+        guild.guild = row[FIELD_GUILD];
+        guild.user_id = row[FIELD_USER];
+        guild.twitch = row[FIELD_TWITCH_NAME];
+        guild.date_update = row[FIELD_DATE_UPDATE];
     }
+    return guild;
+}
+
+exports.getGuildMembers = guildId => {
+    createIfNotExists();
+
+    let guilds = [];
+
+    let sql = `SELECT * FROM ${TABLE_NAME} WHERE ${FIELD_GUILD} = ?`;
+    db.each(sql, [guildId], (err, row) => {
+        if (err) {
+          throw err;
+        }
+        let guild = rowToGuild(row);
+
+        if (guild.id > -1){
+            guilds.push(rowToGuild(row));
+        }
+      });
     
+    return guilds;
 };

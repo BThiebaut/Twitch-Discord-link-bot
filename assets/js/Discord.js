@@ -17,8 +17,8 @@ let setTwitchName = interaction => {
     let user = interaction.user.id;
     let twitchName = interaction.options.getString('pseudo');
 
-    let response = db.saveTwitchName(guild, user, twitchName);
-    interaction.reply(response);
+    let response = db.getGuildMembers(guild);
+    interaction.reply("Check les logs. CONNARD!");
 };
 
 exports.commands = [
