@@ -1,6 +1,7 @@
 require('dotenv').config();
 const twitch = require('./Twitch');
 const db = require('./Db');
+const { Permissions } = require('discord.js');
 
 let client;
 
@@ -16,9 +17,12 @@ let setTwitchName = interaction => {
     let guild = interaction.guildId;
     let user = interaction.user.id;
     let twitchName = interaction.options.getString('pseudo');
-
-    let response = db.getGuildMembers(guild);
-    interaction.reply("Check les logs. CONNARD!");
+    try {
+        let response = db.saveTwitchName(guild, user, twitchName);
+        interaction.reply(response);
+    }catch(e){
+        interaction.reply("Une erreur s'est produite : " + e);
+    }
 };
 
 exports.commands = [
@@ -49,8 +53,12 @@ exports.onMessage = message => {
     
 };
 
+exports.updateVips = () => {
+    twitch.getVips().then(onVipsResponse, console.error);
+}
+
 exports.onInteraction = interaction => {
-    if (interaction.commandName === 'vipsync'){
+    if (interaction.commandName === 'vipsync' && interaction.member.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)){
         twitch.getVips().then(onVipsResponse, console.error);
         interaction.reply('La synchronisation des VIPs a bien été initialisée');
     }else if (interaction.commandName === 'twitchname'){

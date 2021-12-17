@@ -42,6 +42,13 @@ client.once('ready', () => {
         }
       })();
       discord.setClient(client);
+
+      function checkVips(){
+        discord.updateVips();
+      }
+
+      checkVips();
+      setInterval(checkVips, 3600000); // 1 hour
 });
 
 client.on('interactionCreate', async interaction => {
