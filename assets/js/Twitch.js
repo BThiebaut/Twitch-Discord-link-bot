@@ -1,7 +1,6 @@
 require('dotenv').config();
 const tmi = require('tmi.js');
 
-let channel = process.env.TWITCH_CHANNEL;
 let isConnected = false;
 
 const client = new tmi.Client({
@@ -51,7 +50,7 @@ exports.onMessage = message => {
     console.log(message);
 };
 
-exports.getVips = () => {
+exports.getVips = channel => {
     return new Promise((resolve, reject) => {
         connect().then(() => {
             client.vips(channel).then(resolve, reject);
@@ -61,7 +60,7 @@ exports.getVips = () => {
     });
 };
 
-exports.getMods = () => {
+exports.getMods = channel => {
     return new Promise((resolve, reject) => {
         connect().then(() => {
             client.mods(channel).then(resolve, reject);

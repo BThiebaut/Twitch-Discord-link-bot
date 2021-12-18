@@ -44,7 +44,7 @@ client.once('ready', () => {
       discord.setClient(client);
 
       function checkVips(){
-        discord.updateVips();
+        discord.updateAllVips();
       }
 
       checkVips();
