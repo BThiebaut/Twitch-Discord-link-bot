@@ -4,14 +4,12 @@ const Database = require('better-sqlite3');
 const db = new Database(__dirname + '/../db/diditwitchdb.db', { verbose: console.log });
 
 const TABLE_NAME = "GUILDS";
-const FIELD_ID = "ID";
 const FIELD_GUILD = "GUILD_ID";
 const FIELD_USER = "USER_ID";
 const FIELD_TWITCH_NAME = "TWITCH_NAME";
 const FIELD_DATE_UPDATE = "DATE_UPD";
 
 const TABLE_CONF = "GUILDS_CONFIGS";
-const FIELD_CONF_ID = "ID";
 const FIELD_CONF_GUILD = "GUILD_ID";
 const FIELD_CONF_TWITCH = "TWITCH_CHANNEL";
 const FIELD_CONF_ROLE_VIP = "ROLE_VIP";
@@ -22,11 +20,11 @@ function createIfNotExists()
 {
     let def = `
         (
-            ${FIELD_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
+            ${FIELD_USER} TEXT,
             ${FIELD_GUILD} TEXT NOT NULL,
-            ${FIELD_USER} TEXT NOT NULL,
             ${FIELD_TWITCH_NAME} TEXT NOT NULL,
-            ${FIELD_DATE_UPDATE} TEXT
+            ${FIELD_DATE_UPDATE} TEXT,
+            PRIMARY KEY (${FIELD_USER}, ${FIELD_GUILD})
         )
     `;
     let sql = `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} ${def};`;
@@ -38,8 +36,7 @@ function createConfIfNotExists()
 {
     let def = `
         (
-            ${FIELD_CONF_ID} INTEGER PRIMARY KEY AUTOINCREMENT,
-            ${FIELD_CONF_GUILD} TEXT NOT NULL,
+            ${FIELD_CONF_GUILD} TEXT PRIMARY KEY,
             ${FIELD_CONF_ROLE_VIP} TEXT NOT NULL,
             ${FIELD_CONF_ROLE_CMD} TEXT NOT NULL,
             ${FIELD_CONF_TWITCH} TEXT NOT NULL
@@ -50,16 +47,19 @@ function createConfIfNotExists()
     db.exec(sql);
 }
 
+let createTables = () => {
+    createConfIfNotExists();
+    createIfNotExists();
+}
+
 exports.guildTemplate = {
-    id : -1,
+    user : "",
     guild : "",
-    user_id : "",
     twitch : "",
     date_update : "",
 };
 
 exports.confTemplate = {
-    id : -1,
     guild : "",
     roleVip : "",
     roleCmd : "",
@@ -69,7 +69,6 @@ exports.confTemplate = {
 function rowToConf(row){
     let conf = Object.assign({}, exports.confTemplate);
     if (row){
-        conf.id = row[FIELD_CONF_ID];
         conf.guild = row[FIELD_CONF_GUILD];
         conf.roleVip = row[FIELD_CONF_ROLE_VIP];
         conf.roleCmd = row[FIELD_CONF_ROLE_CMD];
@@ -82,9 +81,8 @@ function rowToGuild(row)
 {
     let guild = Object.assign({}, exports.guildTemplate);
     if (row){
-        guild.id = row[FIELD_ID];
+        guild.user = row[FIELD_USER];
         guild.guild = row[FIELD_GUILD];
-        guild.user_id = row[FIELD_USER];
         guild.twitch = row[FIELD_TWITCH_NAME];
         guild.date_update = row[FIELD_DATE_UPDATE];
     }
@@ -92,16 +90,16 @@ function rowToGuild(row)
 }
 
 exports.getGuildMembers = guildId => {
-    createIfNotExists();
+    createTables();
 
     let guilds = [];
 
     let sql = `SELECT * FROM ${TABLE_NAME} WHERE ${FIELD_GUILD} = ?`;
     let stmt = db.prepare(sql);
     let rows = stmt.all(guildId);
-    
+
     for(let row of rows){
-        if (row.id > -1){
+        if (row[FIELD_GUILD]){
             let guild = rowToGuild(row);
             guilds.push(guild);
         }
@@ -111,40 +109,43 @@ exports.getGuildMembers = guildId => {
 };
 
 exports.getUser = (guildId, userId) => {
-    createIfNotExists();
+    createTables();
     let sql = `SELECT * FROM ${TABLE_NAME} WHERE ${FIELD_GUILD} = '?' AND ${FIELD_USER} = '?'`;
     let stmt = db.prepare(sql);
     let row = stmt.run(guildId, userId);
-    console.log(row);
     return rowToGuild(row);
 };
 
 exports.saveTwitchName = (guildId, userId, twitchName) => {
-    createIfNotExists();
-
-    /* @var exports.guildTemplate */
-    let guild = exports.getUser(guildId, userId);
-    console.log(guild);
-    let sql = "";
+    createTables();
+    
     let date = new Date();
     let strDate = date.getDay() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear();
-    // UPDATE CURRENT ENTRY
-    if (guild.id > -1){
-        sql = `UPDATE ${TABLE_NAME} SET ${FIELD_TWITCH_NAME} = ?, ${FIELD_DATE_UPDATE} = ? WHERE ${FIELD_GUILD} = ? AND ${FIELD_USER} = ?`;
-        let stmt = db.prepare(sql);
-        let res = stmt.run(twitchName, strDate, guildId, userId);
-        return "Nom twitch mis à jour";
-    } else {
-        // CREATE NEW ENTRY
-        sql = `INSERT INTO ${TABLE_NAME} (${FIELD_GUILD}, ${FIELD_USER}, ${FIELD_TWITCH_NAME}, ${FIELD_DATE_UPDATE}) VALUES (?, ?, ?, ?)`;
-        let stmt = db.prepare(sql);
-        let res = stmt.run(guildId, userId, twitchName, strDate);
-    }
-    return "Nom twitch ajouté";
+
+    let sql = `INSERT OR REPLACE INTO ${TABLE_NAME} (${FIELD_USER}, ${FIELD_GUILD}, ${FIELD_TWITCH_NAME}, ${FIELD_DATE_UPDATE}) VALUES (?, ?, ?, ?);`
+    let stmt = db.prepare(sql);
+    let res = stmt.run(userId, guildId, twitchName, strDate);
+
+    return "Nom twitch ajouté/modifié";
 };
 
+let formatRole = role => {
+    let regex = /([0-9A-z]+)/;
+    let match = role.match(regex);
+    
+    if (!utils.defined(match[0])){
+        throw `Rôle ${role} invalide, utilisez le format @Role`;
+    }
+
+    return match[0];
+}
+
 exports.setGuildConf = (guildId, roleVip, roleCmd, twitchchannel) => {
-    createConfIfNotExists();
+    createTables();
+
+    roleVip = formatRole(roleVip);
+    roleCmd = formatRole(roleCmd);
+
     let sql = `INSERT OR REPLACE INTO ${TABLE_CONF} (${FIELD_CONF_GUILD}, ${FIELD_CONF_ROLE_VIP}, ${FIELD_CONF_ROLE_CMD}, ${FIELD_CONF_TWITCH}) VALUES(?,?,?,?);`
     let stmt = db.prepare(sql);
     let res = stmt.run(guildId, roleVip, roleCmd, twitchchannel);
@@ -152,13 +153,14 @@ exports.setGuildConf = (guildId, roleVip, roleCmd, twitchchannel) => {
 }
 
 exports.getAllGuilds = () => {
+    createTables();
     let sql = `SELECT * FROM ${TABLE_CONF}`;
     let stmt = db.prepare(sql);
     let rows = stmt.all();
     let guilds = [];
     for(let row of rows){
         let guild = rowToConf(row);
-        if (guild.id > -1){
+        if (guild.guild){
             guilds.push(guild);
         }
     }
@@ -167,6 +169,7 @@ exports.getAllGuilds = () => {
 };
 
 exports.getGuildConf = guildId => {
+    createTables();
     let sql = `SELECT * FROM ${TABLE_CONF} WHERE ${FIELD_CONF_GUILD} = ?`;
     let stmt = db.prepare(sql);
     let row = stmt.get(guildId);

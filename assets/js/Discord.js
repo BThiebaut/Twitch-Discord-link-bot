@@ -7,11 +7,30 @@ const utils = require('./../js/Utils');
 let client;
 
 let onVipsResponse = (vipList, guild) => {
-    let list = client.guilds.cache.get(`${process.env.DISCORD_GUILD_ID}`);
-    let members = [];
-    list.members.cache.forEach(member => { members.push(member) }); 
-    console.log(members);
-    console.log(vipList);
+    let guildData = client.guilds.cache.get(guild.guild);
+    guildData.members.fetch().then(r => {
+        let members = [];
+        guildData.members.cache.forEach(member => { members.push(member) }); 
+        
+        let role = guildData.roles.cache.find(r => r.id === guild.roleVip);
+        let twitchNames = db.getGuildMembers(guild.guild);
+        
+    
+        for(let member of members){
+            // Remove role if not vip
+            member.roles.remove(role);
+            let data = twitchNames.find(e => e.user == member.id);
+            if (utils.defined(data)){
+                let vip = vipList.find(e => data.twitch == e);
+                // Add role if in vip list
+                if (utils.defined(vip)){
+                    member.roles.add(role);
+                }
+            }
+    
+        }
+    })
+
 };
 
 let setTwitchName = interaction => {
@@ -32,7 +51,7 @@ exports.commands = [
         description: "Sync role vip, nécessite d'être en diffusion" 
     },
     {
-        name: "twitchname",
+        name: "settwitchname",
         description: "Renseigne ton pseudo sur twitch pour synchroniser ton vip",
         options : [
             {
@@ -99,16 +118,19 @@ exports.onInteraction = interaction => {
             }
             exports.updateVips(guild.twitchChannel, guild);
             interaction.reply('La synchronisation des VIPs a bien été initialisée');
-        }else if (interaction.commandName === 'guildconfig' && interaction.member.permissions.has(Permissions.ALL)){
+        }else if (interaction.commandName === 'guildconfig' && interaction.member.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)){
             let discordId = interaction.guildId;
             let roleVip = interaction.options.getString('rolevip');
             let roleCmd = interaction.options.getString('rolecmd');
             let twitchchannel = interaction.options.getString('twitchchannel');
     
             db.setGuildConf(discordId, roleVip, roleCmd, twitchchannel);
+            interaction.reply("Configuration discord/twitch enregistrée");
         
-        }else if (interaction.commandName === 'twitchname'){
+        }else if (interaction.commandName === 'settwitchname'){
             setTwitchName(interaction);
+        }else {
+            interaction.reply("Droits insuffisant pour effectuer cette commande");
         }
     }catch(e){
         console.error(e);

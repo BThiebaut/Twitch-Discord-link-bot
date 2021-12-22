@@ -8,9 +8,9 @@ const { Routes } = require('discord-api-types/v9');
 // Connect Discord bot
 const myIntents = new Intents();
 
-myIntents.add(Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILDS);
+myIntents.add(Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILDS);
 
-const client = new Client({ intents: myIntents });
+const client = new Client({ intents: myIntents, fetchAllMembers: true });
 
 client.on('ready', function () {
     console.log('ready');
@@ -26,17 +26,22 @@ client.on('message', message => {
 
 const rest = new REST({ version: '9' }).setToken(`${process.env.DISCORD_TOKEN}`);
 
+
+// Connect on every configured guild
 client.once('ready', () => {
+    const guilds = client.guilds.cache.map(guild => guild.id);
+
     (async () => {
         try {
-          console.log('Started refreshing application (/) commands.');
+          console.log('Started refreshing application (/) commands of every guilds.');
+          for(let guild of guilds){
+            await rest.put(
+              Routes.applicationGuildCommands(client.user.id, guild),
+              { body: discord.commands },
+            );
+          }
       
-          await rest.put(
-            Routes.applicationGuildCommands(client.user.id, '703515334832816181'),
-            { body: discord.commands },
-          );
-      
-          console.log('Successfully reloaded application (/) commands.');
+          console.log('Successfully reloaded application (/) commands of every guilds.');
         } catch (error) {
           console.error(error);
         }
