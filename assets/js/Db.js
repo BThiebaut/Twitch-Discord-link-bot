@@ -113,7 +113,9 @@ exports.getUser = (guildId, userId) => {
 
 exports.saveTwitchName = (guildId, userId, twitchName) => {
     createTables();
-    
+
+    twitchName = utils.satanize(twitchName);
+
     let date = new Date();
     let strDate = date.getDay() + '-' + (date.getMonth() + 1) + '-' + date.getFullYear();
 
@@ -139,6 +141,7 @@ exports.setGuildConf = (guildId, roleVip, twitchchannel) => {
     createTables();
 
     roleVip = formatRole(roleVip);
+    twitchchannel = utils.satanize(twitchchannel);
 
     let sql = `INSERT OR REPLACE INTO ${TABLE_CONF} (${FIELD_CONF_GUILD}, ${FIELD_CONF_ROLE_VIP}, ${FIELD_CONF_TWITCH}) VALUES(?,?,?);`
     let stmt = db.prepare(sql);
@@ -169,3 +172,4 @@ exports.getGuildConf = guildId => {
     let row = stmt.get(guildId);
     return rowToConf(row);
 };
+

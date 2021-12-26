@@ -31,3 +31,7 @@ exports.decrypt = (hash) => {
 
     return decrpyted.toString();
 };
+
+exports.satanize = input => {
+    return input.replace(/[^A-z0-9_àèìòùÀÈÌÒÙáéíóúýÁÉÍÓÚÝâêîôûÂÊÎÔÛãñõÃÑÕäëïöüÿÄËÏÖÜŸçÇßØøÅåÆæœ]/g, '');
+}
