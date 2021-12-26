@@ -48,7 +48,7 @@ client.once('ready', () => {
       discord.setClient(client);
 
       function checkVips(){
-        //discord.updateAllVips();
+        discord.updateAllVips();
       }
 
       checkVips();
@@ -66,8 +66,8 @@ client.once('ready', () => {
       client.user.setPresence({
         status: 'online',
         activities: [{ 
-          name   : "tes rêves",
-          type   : "WATCHING",
+          name   : "/twitchconnect",
+          type   : "PLAYING",
           buttons: [{ label: "Lier mon twitch", url : `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=code&scope=connections%20identify%20guilds` }]
         }],
       });

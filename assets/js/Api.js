@@ -40,12 +40,16 @@ let getTwitchName = async access_token => {
   const json = await response.json();
 
   const userId = jsonIdentity.id;
-  let twitchName = "";
+  let twitchName = null;
   for(let con of json){
     if (con.type == 'twitch'){
       twitchName = con.name;
       break;
     }
+  }
+
+  if (twitchName === null){
+    throw "Votre compte discord et twitch doivent être liés";
   }
 
   // Get guilds of the users and compare with discord api response

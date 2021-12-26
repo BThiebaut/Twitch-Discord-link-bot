@@ -58,7 +58,7 @@ let sendTwitchConnectLink = interaction => {
         .setURL(url)
         .setDescription('');
 
-    interaction.reply({ content: 'Autoriser le bot à collecter votre nom twitch', ephemeral: false, embeds: [embed]});
+    interaction.reply({ content: 'Autoriser le bot à connaître votre nom twitch si lié', ephemeral: false, embeds: [embed]});
 };
 
 exports.setOauthTwithName = (guildId, userId, name) => {
