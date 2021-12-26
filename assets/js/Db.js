@@ -13,8 +13,6 @@ const TABLE_CONF = "GUILDS_CONFIGS";
 const FIELD_CONF_GUILD = "GUILD_ID";
 const FIELD_CONF_TWITCH = "TWITCH_CHANNEL";
 const FIELD_CONF_ROLE_VIP = "ROLE_VIP";
-const FIELD_CONF_ROLE_CMD = "ROLE_CMD";
-
 
 function createIfNotExists()
 {
@@ -38,7 +36,6 @@ function createConfIfNotExists()
         (
             ${FIELD_CONF_GUILD} TEXT PRIMARY KEY,
             ${FIELD_CONF_ROLE_VIP} TEXT NOT NULL,
-            ${FIELD_CONF_ROLE_CMD} TEXT NOT NULL,
             ${FIELD_CONF_TWITCH} TEXT NOT NULL
         )
     `;
@@ -62,7 +59,6 @@ exports.guildTemplate = {
 exports.confTemplate = {
     guild : "",
     roleVip : "",
-    roleCmd : "",
     twitchChannel : "",
 };
 
@@ -71,7 +67,6 @@ function rowToConf(row){
     if (row){
         conf.guild = row[FIELD_CONF_GUILD];
         conf.roleVip = row[FIELD_CONF_ROLE_VIP];
-        conf.roleCmd = row[FIELD_CONF_ROLE_CMD];
         conf.twitchChannel = row [FIELD_CONF_TWITCH];
     }
     return conf;
@@ -140,15 +135,14 @@ let formatRole = role => {
     return match[0];
 }
 
-exports.setGuildConf = (guildId, roleVip, roleCmd, twitchchannel) => {
+exports.setGuildConf = (guildId, roleVip, twitchchannel) => {
     createTables();
 
     roleVip = formatRole(roleVip);
-    roleCmd = formatRole(roleCmd);
 
-    let sql = `INSERT OR REPLACE INTO ${TABLE_CONF} (${FIELD_CONF_GUILD}, ${FIELD_CONF_ROLE_VIP}, ${FIELD_CONF_ROLE_CMD}, ${FIELD_CONF_TWITCH}) VALUES(?,?,?,?);`
+    let sql = `INSERT OR REPLACE INTO ${TABLE_CONF} (${FIELD_CONF_GUILD}, ${FIELD_CONF_ROLE_VIP}, ${FIELD_CONF_TWITCH}) VALUES(?,?,?);`
     let stmt = db.prepare(sql);
-    let res = stmt.run(guildId, roleVip, roleCmd, twitchchannel);
+    let res = stmt.run(guildId, roleVip, twitchchannel);
     return "Configuration du serveur mise à jour";
 }
 

@@ -74,12 +74,6 @@ exports.commands = [
                 required: true
             },
             {
-                name : "rolecmd",
-                description : "Role pouvant effectuer la synchronisation manuelle (ex : @Moderateurs)",
-                type : 3,
-                required: true
-            },
-            {
                 name : "twitchchannel",
                 description : "Chaîne twitch à synchroniser",
                 type : 3,
@@ -116,7 +110,7 @@ exports.updateAllVips = async () => {
 
 exports.onInteraction = interaction => {
     try {
-        if (interaction.commandName === 'vipsync' && interaction.member.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)){
+        if (interaction.commandName === 'vipsync' && interaction.member.permissions.has(Permissions.FLAGS.MANAGE_ROLES)){
 
             let guild = db.getGuildConf(interaction.guildId);
             if (guild.id == -1){
@@ -127,10 +121,9 @@ exports.onInteraction = interaction => {
         }else if (interaction.commandName === 'guildconfig' && interaction.member.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)){
             let discordId = interaction.guildId;
             let roleVip = interaction.options.getString('rolevip');
-            let roleCmd = interaction.options.getString('rolecmd');
             let twitchchannel = interaction.options.getString('twitchchannel');
     
-            db.setGuildConf(discordId, roleVip, roleCmd, twitchchannel);
+            db.setGuildConf(discordId, roleVip, twitchchannel);
             interaction.reply("Configuration discord/twitch enregistrée");
         
         }else if (interaction.commandName === 'settwitchname'){
