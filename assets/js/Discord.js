@@ -98,13 +98,19 @@ exports.onMessage = message => {
 };
 
 exports.updateVips = (channel, guild) => {
+    console.log("Update guild : " + guild.guild);
     twitch.getVips(channel).then(list => onVipsResponse(list, guild), console.error);
 }
 
-exports.updateAllVips = () => {
+let sleep = ms => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+exports.updateAllVips = async () => {
     let guilds = db.getAllGuilds();
-    for(let guild of guilds){
-        twitch.getVips(guild.twitchChannel).then(list => onVipsResponse(list, guild), console.error);
+    for (let guild of guilds){
+        exports.updateVips(guild.twitchChannel, guild);
+        await sleep(10000);
     }
 }
 

@@ -1,16 +1,21 @@
 require('dotenv').config();
 const tmi = require('tmi.js');
 const db = require('./Db');
+const utils = require('./Utils');
 
 let isConnected = false;
 let client = null;
 
-let createClient = () => {
+let createClient = channel => {
     if (client == null){
         let channels = [];
-        let guilds = db.getAllGuilds();
-        for(let guild of guilds){
-            channels.push(guild.twitchChannel);
+        if (!utils.defined(channel)){
+            let guilds = db.getAllGuilds();
+            for(let g of guilds){
+                channels.push(g.twitchChannel);
+            }
+        }else {
+            channels.push(channel);
         }
 
         client = new tmi.Client({
@@ -28,6 +33,7 @@ let createClient = () => {
     }
 }
 
+
 let registerEvents = () => {
     createClient();
     client.on('message', (channel, tags, message, self) => {
@@ -39,19 +45,18 @@ let registerEvents = () => {
     });
 };
 
-let connect = () => {
-    createClient();
+let connect = channel => {
+    createClient(channel);
     return new Promise((resolve, reject) => {
-        //if (!isConnected){
+        if (!isConnected){
             client.once('join', resolve);
             client.connect().catch(reject);
             isConnected = true;
-        //}
+        }
     });
 };
 
 let disconnect = () => {
-    createClient();
     return new Promise((resolve, reject) => {
         if (isConnected){
             client.disconnect().catch(reject);
@@ -61,28 +66,50 @@ let disconnect = () => {
     });
 }
 
+let deleteClient = () => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            
+            if (client !== null){
+                disconnect().then(() => {
+                    client = null;
+                    resolve();
+                }, err => {
+                    console.error("deleteClient : " , err);
+                    reject();
+                })
+            }
+        }, 2000);
+    });
+}
+
+
 exports.onMessage = message => {
     console.log(message);
 };
 
 exports.getVips = channel => {
-    createClient();
+    createClient(channel);
     return new Promise((resolve, reject) => {
         connect().then(() => {
             client.vips(channel).then(resolve, reject);
         }, err => {
-            console.error(err);
+            console.error("GetVips error : " , err);
+        }).finally(() => {
+            deleteClient();
         })
     });
 };
 
 exports.getMods = channel => {
-    createClient();
+    createClient(channel);
     return new Promise((resolve, reject) => {
         connect().then(() => {
             client.mods(channel).then(resolve, reject);
         }, err => {
             console.error('Get mods error : ', err);
+        }).finally(() => {
+            deleteClient();
         })
     });
 };
