@@ -35,3 +35,13 @@ exports.decrypt = (hash) => {
 exports.satanize = input => {
     return input.replace(/[^A-z0-9_àèìòùÀÈÌÒÙáéíóúýÁÉÍÓÚÝâêîôûÂÊÎÔÛãñõÃÑÕäëïöüÿÄËÏÖÜŸçÇßØøÅåÆæœ]/g, '');
 }
+
+exports.catchAsync = fn => (
+    (req, res, next) => {
+      const routePromise = fn(req, res, next);
+      if (routePromise.catch) {
+        routePromise.catch(err => next(err));
+      }
+    }
+  );
+  

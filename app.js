@@ -4,6 +4,7 @@ const { Client, Intents } = require('discord.js');
 const discord = require('./assets/js/Discord');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
+const Server = require('./assets/js/Server');
 
 // Connect Discord bot
 const myIntents = new Intents();
@@ -54,6 +55,7 @@ client.once('ready', () => {
 
       checkVips();
       setInterval(checkVips, 3600000); // 1 hour
+      Server.run();
 });
 
 client.on('interactionCreate', async interaction => {

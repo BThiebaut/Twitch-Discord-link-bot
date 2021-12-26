@@ -45,6 +45,10 @@ let setTwitchName = interaction => {
     }
 };
 
+exports.setOauthTwithName = (guildId, userId, name) => {
+    db.saveTwitchName(guildId, userId, name);
+};
+
 exports.commands = [
     {
         name: "vipsync",
