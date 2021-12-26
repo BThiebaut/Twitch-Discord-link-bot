@@ -1,8 +1,12 @@
 require('dotenv').config();
 const twitch = require('./Twitch');
 const db = require('./Db');
-const { Permissions } = require('discord.js');
+const { Permissions, MessageEmbed } = require('discord.js');
 const utils = require('./../js/Utils');
+
+const CLIENT_ID = process.env.DISCORD_ID;
+const OAUTH_URL = process.env.OAUTH_URL;
+const redirect = encodeURIComponent(OAUTH_URL + '/api/discord/callback');
 
 let client;
 
@@ -45,6 +49,18 @@ let setTwitchName = interaction => {
     }
 };
 
+let sendTwitchConnectLink = interaction => {
+    let url = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=code&scope=connections%20identify%20guilds`;
+
+    const embed = new MessageEmbed()
+        .setColor('#0099ff')
+        .setTitle('Cliquez ici')
+        .setURL(url)
+        .setDescription('');
+
+    interaction.reply({ content: 'Autoriser le bot à collecter votre nom twitch', ephemeral: false, embeds: [embed]});
+};
+
 exports.setOauthTwithName = (guildId, userId, name) => {
     db.saveTwitchName(guildId, userId, name);
 };
@@ -84,16 +100,16 @@ exports.commands = [
                 required: true
             }
         ]
+    },
+    {
+        name : "twitchconnect",
+        description: "Obtenir le lien de synchronisation avec twitch"
     }
 ];
 
 exports.setClient = (bot) => {
     client = bot;
 }
-
-exports.onMessage = message => {
-    
-};
 
 exports.updateVips = (channel, guild) => {
     console.log("Update guild : " + guild.guild);
@@ -132,6 +148,8 @@ exports.onInteraction = interaction => {
         
         }else if (interaction.commandName === 'settwitchname'){
             setTwitchName(interaction);
+        }else if (interaction.commandName === 'twitchconnect'){
+            sendTwitchConnectLink(interaction);
         }else {
             interaction.reply("Droits insuffisant pour effectuer cette commande");
         }
