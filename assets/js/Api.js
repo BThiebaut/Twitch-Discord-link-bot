@@ -37,11 +37,10 @@ let getTwitchName = async access_token => {
     headers: {'Authorization': `Bearer ${access_token}`}
   });
 
-  const json = await response.json();
-
+  const jsonCOn = await response.json();
   const userId = jsonIdentity.id;
   let twitchName = null;
-  for(let con of json){
+  for(let con of jsonCOn){
     if (con.type == 'twitch'){
       twitchName = con.name;
       break;
@@ -94,8 +93,8 @@ router.get('/callback', utils.catchAsync(async (req, res) => {
           "Content-type": "application/x-www-form-urlencoded"
         },
       });
-    const json = await response.json();
-    getTwitchName(json.access_token);
+    const jsonToken = await response.json();
+    getTwitchName(jsonToken.access_token);
 
     res.redirect('/success');
   }));

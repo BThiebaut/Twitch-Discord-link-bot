@@ -13,8 +13,8 @@ exports.run = () => {
       res.status(200).sendFile(path.join(__dirname, '../html/success.html'));
     });
     
-    app.listen(50451, () => {
-      console.info('Running oAuth server on port 50451');
+    app.listen(2000, () => {
+      console.info('Running oAuth server on port 2000');
     });
 
     
