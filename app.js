@@ -25,6 +25,7 @@ client.login(`${process.env.DISCORD_TOKEN}`);
 
 const rest = new REST({ version: '9' }).setToken(`${process.env.DISCORD_TOKEN}`);
 
+
 let reloadCommands = () => {
   let guilds = client.guilds.cache.map(guild => guild.id);
 
@@ -40,7 +41,7 @@ let reloadCommands = () => {
     
         console.log('Successfully reloaded application (/) commands of every guilds.');
       } catch (error) {
-        console.error(error);
+        console.log(error);
       }
     })();
 };
@@ -55,7 +56,11 @@ client.once('ready', () => {
       discord.setClient(client);
 
       function checkVips(){
-        discord.updateAllVips();
+        try {
+          discord.updateAllVips();
+        }catch(e){
+          console.log(e);
+        }
       }
 
       checkVips();
@@ -71,7 +76,6 @@ client.once('ready', () => {
       });
 
       Server.run();
-
 });
 
 client.on('interactionCreate', async interaction => {

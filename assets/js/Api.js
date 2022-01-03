@@ -48,7 +48,7 @@ let getTwitchName = async access_token => {
   }
 
   if (twitchName === null){
-    throw "Votre compte discord et twitch doivent être liés";
+    return false;
   }
 
   // Get guilds of the users and compare with discord api response
@@ -94,8 +94,11 @@ router.get('/callback', utils.catchAsync(async (req, res) => {
         },
       });
     const jsonToken = await response.json();
-    getTwitchName(jsonToken.access_token);
 
+    if (getTwitchName(jsonToken.access_token) === false){
+      res.redirect('/error');
+    }
+    
     res.redirect('/success');
   }));
 

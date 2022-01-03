@@ -113,7 +113,7 @@ exports.setClient = (bot) => {
 
 exports.updateVips = (channel, guild) => {
     console.log("Update guild : " + guild.guild);
-    twitch.getVips(channel).then(list => onVipsResponse(list, guild), console.error);
+    twitch.getVips(channel).then(list => onVipsResponse(list, guild), console.log);
 }
 
 let sleep = ms => {
@@ -121,10 +121,14 @@ let sleep = ms => {
 }
 
 exports.updateAllVips = async () => {
-    let guilds = db.getAllGuilds();
-    for (let guild of guilds){
-        exports.updateVips(guild.twitchChannel, guild);
-        await sleep(10000);
+    try {
+        let guilds = db.getAllGuilds();
+        for (let guild of guilds){
+            exports.updateVips(guild.twitchChannel, guild);
+            await sleep(10000);
+        }
+    }catch(e){
+        console.log(e);
     }
 }
 
@@ -154,7 +158,7 @@ exports.onInteraction = interaction => {
             interaction.reply("Droits insuffisant pour effectuer cette commande");
         }
     }catch(e){
-        console.error(e);
+        console.log(e);
         interaction.reply("Une erreur s'est produite : " + e);
     }
 }
