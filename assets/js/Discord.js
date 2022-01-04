@@ -19,6 +19,7 @@ let onVipsResponse = (vipList, guild) => {
         let role = guildData.roles.cache.find(r => r.id === guild.roleVip);
         let twitchNames = db.getGuildMembers(guild.guild);
         
+        console.log('Vip list', vipList);
     
         for(let member of members){
             // Remove role if not vip
@@ -26,9 +27,13 @@ let onVipsResponse = (vipList, guild) => {
             let data = twitchNames.find(e => e.user == member.id);
             if (utils.defined(data)){
                 let vip = vipList.find(e => data.twitch == e);
+
                 // Add role if in vip list
                 if (utils.defined(vip)){
+                    console.log("Added VIP : " , data.twitch);
                     member.roles.add(role);
+                }else {
+                    console.log("Non VIP : " , data.twitch);
                 }
             }
     
@@ -68,7 +73,7 @@ exports.setOauthTwithName = (guildId, userId, name) => {
 exports.commands = [
     {
         name: "vipsync",
-        description: "Sync role vip, nécessite d'être en diffusion" 
+        description: "Sync role vip, nécessite d'être modérateur ou plus" 
     },
     {
         name: "settwitchname",
