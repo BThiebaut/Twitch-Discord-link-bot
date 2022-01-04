@@ -22,19 +22,23 @@ let onVipsResponse = (vipList, guild) => {
         console.log('Vip list', vipList);
     
         for(let member of members){
-            // Remove role if not vip
-            member.roles.remove(role);
+
             let data = twitchNames.find(e => e.user == member.id);
             if (utils.defined(data)){
                 let vip = vipList.find(e => data.twitch == e);
 
                 // Add role if in vip list
                 if (utils.defined(vip)){
-                    console.log("Added VIP : " , data.twitch);
+                    console.log("Added VIP registered : " , data.twitch);
                     member.roles.add(role);
                 }else {
-                    console.log("Non VIP : " , data.twitch);
+                    // Remove role if not in vip list
+                    console.log("Non VIP registered : " , data.twitch);
+                    member.roles.remove(role);
                 }
+            }else {
+                // Remove role if not vip
+                member.roles.remove(role);
             }
     
         }
