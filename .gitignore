@@ -4,3 +4,4 @@ assets/db/db.json
 *.db
 .vscode
 tmp.txt
+assets/db/didi*
