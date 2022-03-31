@@ -26,43 +26,46 @@ client.login(`${process.env.DISCORD_TOKEN}`);
 const rest = new REST({ version: '9' }).setToken(`${process.env.DISCORD_TOKEN}`);
 
 
+let reloadCommands = () => {
+  let guilds = client.guilds.cache.map(guild => guild.id);
+
+  (async () => {
+      try {
+        console.log('Started refreshing application (/) commands of every guilds.');
+        for(let guild of guilds){
+          await rest.put(
+            Routes.applicationGuildCommands(client.user.id, guild),
+            { body: discord.commands },
+          );
+        }
+    
+        console.log('Successfully reloaded application (/) commands of every guilds.');
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+};
+
+client.on('guildMemberAdd', member => {
+  reloadCommands();
+});
+
 // Connect on every configured guild
 client.once('ready', () => {
-    const guilds = client.guilds.cache.map(guild => guild.id);
-
-    (async () => {
-        try {
-          console.log('Started refreshing application (/) commands of every guilds.');
-          for(let guild of guilds){
-            await rest.put(
-              Routes.applicationGuildCommands(client.user.id, guild),
-              { body: discord.commands },
-            );
-          }
-      
-          console.log('Successfully reloaded application (/) commands of every guilds.');
-        } catch (error) {
-          console.error(error);
-        }
-      })();
+      reloadCommands();
       discord.setClient(client);
 
       function checkVips(){
-        discord.updateAllVips();
+        try {
+          discord.updateAllVips();
+        }catch(e){
+          console.log(e);
+        }
       }
 
       checkVips();
       setInterval(checkVips, 3600000); // 1 hour
       
-      
-      // Client presence
-      let button = new MessageButton()
-      .setCustomId('twitchconnect')
-      .setLabel('Connection twitch')
-      .setStyle('PRIMARY')
-      .setURL(`https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirect}&response_type=code&scope=connections%20identify%20guilds`)
-      ;
-
       client.user.setPresence({
         status: 'online',
         activities: [{ 
@@ -73,7 +76,6 @@ client.once('ready', () => {
       });
 
       Server.run();
-
 });
 
 client.on('interactionCreate', async interaction => {

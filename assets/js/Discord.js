@@ -19,17 +19,25 @@ let onVipsResponse = (vipList, guild) => {
         let role = guildData.roles.cache.find(r => r.id === guild.roleVip);
         let twitchNames = db.getGuildMembers(guild.guild);
         
+        console.log('Vip list', vipList);
     
         for(let member of members){
-            // Remove role if not vip
-            member.roles.remove(role);
+
             let data = twitchNames.find(e => e.user == member.id);
             if (utils.defined(data)){
                 let vip = vipList.find(e => data.twitch == e);
+
                 // Add role if in vip list
                 if (utils.defined(vip)){
-                    member.roles.add(role);
+                    console.log("Added VIP registered : " , data.twitch);
+                    member.roles.add(role).catch(console.error);
+                }else {
+                    console.log("Non VIP registered : " , data.twitch);
+                    member.roles.remove(role).catch(console.error);
                 }
+            }else {
+                // Remove role if not vip
+                member.roles.remove(role).catch(console.error);
             }
     
         }
@@ -68,7 +76,7 @@ exports.setOauthTwithName = (guildId, userId, name) => {
 exports.commands = [
     {
         name: "vipsync",
-        description: "Sync role vip, nécessite d'être en diffusion" 
+        description: "Sync role vip, nécessite d'être modérateur ou plus" 
     },
     {
         name: "settwitchname",
@@ -113,7 +121,7 @@ exports.setClient = (bot) => {
 
 exports.updateVips = (channel, guild) => {
     console.log("Update guild : " + guild.guild);
-    twitch.getVips(channel).then(list => onVipsResponse(list, guild), console.error);
+    twitch.getVips(channel).then(list => onVipsResponse(list, guild), console.log);
 }
 
 let sleep = ms => {
@@ -121,10 +129,14 @@ let sleep = ms => {
 }
 
 exports.updateAllVips = async () => {
-    let guilds = db.getAllGuilds();
-    for (let guild of guilds){
-        exports.updateVips(guild.twitchChannel, guild);
-        await sleep(10000);
+    try {
+        let guilds = db.getAllGuilds();
+        for (let guild of guilds){
+            exports.updateVips(guild.twitchChannel, guild);
+            await sleep(10000);
+        }
+    }catch(e){
+        console.log(e);
     }
 }
 
@@ -154,7 +166,7 @@ exports.onInteraction = interaction => {
             interaction.reply("Droits insuffisant pour effectuer cette commande");
         }
     }catch(e){
-        console.error(e);
+        console.log(e);
         interaction.reply("Une erreur s'est produite : " + e);
     }
 }

@@ -13,59 +13,58 @@ const OAUTH_URL = process.env.OAUTH_URL;
 const redirect = encodeURIComponent(OAUTH_URL + '/api/discord/callback');
 
 let getTwitchName = async access_token => {
+    const responseIdentity = await fetch(`https://discordapp.com/api/users/@me`,
+    {
+      method: 'GET',
+      headers: {'Authorization': `Bearer ${access_token}`}
+    });
 
+    const jsonIdentity = await responseIdentity.json();
 
-  const responseIdentity = await fetch(`https://discordapp.com/api/users/@me`,
-  {
-    method: 'GET',
-    headers: {'Authorization': `Bearer ${access_token}`}
-  });
+    const responseGuilds = await fetch(`https://discordapp.com/api/users/@me/guilds`,
+    {
+      method: 'GET',
+      headers: {'Authorization': `Bearer ${access_token}`}
+    });
 
-  const jsonIdentity = await responseIdentity.json();
+    const jsonGuilds = await responseGuilds.json();
 
-  const responseGuilds = await fetch(`https://discordapp.com/api/users/@me/guilds`,
-  {
-    method: 'GET',
-    headers: {'Authorization': `Bearer ${access_token}`}
-  });
+    const response = await fetch(`https://discordapp.com/api/users/@me/connections`,
+    {
+      method: 'GET',
+      headers: {'Authorization': `Bearer ${access_token}`}
+    });
 
-  const jsonGuilds = await responseGuilds.json();
-
-  const response = await fetch(`https://discordapp.com/api/users/@me/connections`,
-  {
-    method: 'GET',
-    headers: {'Authorization': `Bearer ${access_token}`}
-  });
-
-  const jsonCOn = await response.json();
-  const userId = jsonIdentity.id;
-  let twitchName = null;
-  for(let con of jsonCOn){
-    if (con.type == 'twitch'){
-      twitchName = con.name;
-      break;
-    }
-  }
-
-  if (twitchName === null){
-    throw "Votre compte discord et twitch doivent être liés";
-  }
-
-  // Get guilds of the users and compare with discord api response
-  const guilds = db.getAllGuilds();
-  let userGuilds = [];
-  for(let guild of guilds){
-    for(let disc of jsonGuilds){
-      if (guild.guild == disc.id){
-        userGuilds.push(disc.id);
+    const jsonCOn = await response.json();
+    const userId = jsonIdentity.id;
+    let twitchName = null;
+    for(let con of jsonCOn){
+      if (con.type == 'twitch'){
+        console.log('Récupération nom twitch', con);
+        twitchName = con.name;
+        break;
       }
     }
-  }
-  
-  // Save name to all guilds
-  for(let g of userGuilds){
-    discord.setOauthTwithName(g, userId, twitchName);
-  }
+
+    if (twitchName === null){
+      return false;
+    }
+
+    // Get guilds of the users and compare with discord api response
+    const guilds = db.getAllGuilds();
+    let userGuilds = [];
+    for(let guild of guilds){
+      for(let disc of jsonGuilds){
+        if (guild.guild == disc.id){
+          userGuilds.push(disc.id);
+        }
+      }
+    }
+    
+    // Save name to all guilds
+    for(let g of userGuilds){
+      discord.setOauthTwithName(g, userId, twitchName);
+    }
 }
 
 router.get('/login', (req, res) => {
@@ -94,8 +93,12 @@ router.get('/callback', utils.catchAsync(async (req, res) => {
         },
       });
     const jsonToken = await response.json();
-    getTwitchName(jsonToken.access_token);
 
+    if (await getTwitchName(jsonToken.access_token) === false){
+      res.redirect('/error');
+      return;
+    }
+    
     res.redirect('/success');
   }));
 

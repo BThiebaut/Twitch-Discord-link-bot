@@ -75,7 +75,7 @@ let deleteClient = () => {
                     client = null;
                     resolve();
                 }, err => {
-                    console.error("deleteClient : " , err);
+                    console.log("deleteClient : " , err);
                     reject();
                 })
             }
@@ -94,7 +94,7 @@ exports.getVips = channel => {
         connect().then(() => {
             client.vips(channel).then(resolve, reject);
         }, err => {
-            console.error("GetVips error : " , err);
+            console.log("GetVips error : " , err);
         }).finally(() => {
             deleteClient();
         })
@@ -107,7 +107,7 @@ exports.getMods = channel => {
         connect().then(() => {
             client.mods(channel).then(resolve, reject);
         }, err => {
-            console.error('Get mods error : ', err);
+            console.log('Get mods error : ', err);
         }).finally(() => {
             deleteClient();
         })
