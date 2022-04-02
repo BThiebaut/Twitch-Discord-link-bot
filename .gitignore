@@ -1,5 +1,6 @@
 node_modules
 .env
+.env_back
 assets/db/db.json
 *.db
 .vscode
